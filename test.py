@@ -28,6 +28,9 @@ def scan_binance():
     # Получаем список фьючерсных пар
     try:
         exchange_info = requests.get(EXCHANGE_INFO_URL).json()
+        print("Ответ от API Binance:")
+        print(exchange_info)  # Выводим полный ответ API для диагностики
+
         if 'symbols' in exchange_info:
             futures_pairs = {symbol['symbol'] for symbol in exchange_info['symbols'] if symbol['contractType'] == 'PERPETUAL'}
         else:
