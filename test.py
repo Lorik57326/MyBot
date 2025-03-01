@@ -26,27 +26,43 @@ def send_telegram_message(message):
 # --- Основная функция сканирования ---
 def scan_binance():
     # Получаем список фьючерсных пар
-    exchange_info = requests.get(EXCHANGE_INFO_URL).json()
-    futures_pairs = {symbol['symbol'] for symbol in exchange_info['symbols'] if symbol['contractType'] == 'PERPETUAL'}
-    
+    try:
+        exchange_info = requests.get(EXCHANGE_INFO_URL).json()
+        if 'symbols' in exchange_info:
+            futures_pairs = {symbol['symbol'] for symbol in exchange_info['symbols'] if symbol['contractType'] == 'PERPETUAL'}
+        else:
+            print("Ошибка: 'symbols' не найдены в ответе API.")
+            return
+    except requests.exceptions.RequestException as e:
+        print(f"Ошибка при запросе данных с {EXCHANGE_INFO_URL}: {e}")
+        return
+
     print(f"Всего найдено {len(futures_pairs)} фьючерсных пар.")
 
     # Получаем объемы торгов за 24 часа
-    futures_volume_data = requests.get(FUTURES_24HR_URL).json()
-    futures_volumes = {item['symbol']: float(item['quoteVolume']) for item in futures_volume_data}
+    try:
+        futures_volume_data = requests.get(FUTURES_24HR_URL).json()
+        futures_volumes = {item['symbol']: float(item['quoteVolume']) for item in futures_volume_data}
+    except requests.exceptions.RequestException as e:
+        print(f"Ошибка при запросе данных с {FUTURES_24HR_URL}: {e}")
+        return
 
     # Фильтруем пары с объемом > 100 000 USDT
     filtered_pairs = {symbol for symbol in futures_pairs if futures_volumes.get(symbol, 0) > MIN_FUTURES_VOLUME}
     print(f"Отобрано {len(filtered_pairs)} пар с объемом > {MIN_FUTURES_VOLUME} USDT.")
 
     # Получаем цены
-    spot_data = requests.get(SPOT_BOOK_TICKER_URL).json()
-    futures_data = requests.get(FUTURES_BOOK_TICKER_URL).json()
-    mark_price_data = requests.get(MARK_PRICE_URL).json()
+    try:
+        spot_data = requests.get(SPOT_BOOK_TICKER_URL).json()
+        futures_data = requests.get(FUTURES_BOOK_TICKER_URL).json()
+        mark_price_data = requests.get(MARK_PRICE_URL).json()
 
-    spot_prices = {item['symbol']: float(item['bidPrice']) for item in spot_data}  # Покупка на споте (bid)
-    futures_prices = {item['symbol']: float(item['askPrice']) for item in futures_data}  # Продажа на фьючерсе (ask)
-    mark_prices = {item['symbol']: float(item['markPrice']) for item in mark_price_data}  # Справедливая цена
+        spot_prices = {item['symbol']: float(item['bidPrice']) for item in spot_data}  # Покупка на споте (bid)
+        futures_prices = {item['symbol']: float(item['askPrice']) for item in futures_data}  # Продажа на фьючерсе (ask)
+        mark_prices = {item['symbol']: float(item['markPrice']) for item in mark_price_data}  # Справедливая цена
+    except requests.exceptions.RequestException as e:
+        print(f"Ошибка при запросе данных с одного из API: {e}")
+        return
 
     data_list = []
 
