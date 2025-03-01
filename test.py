@@ -8,7 +8,7 @@ def get_btc_price():
     data = response.json()
     return float(data["price"])
 
-while True:
-    price = get_btc_price()
-    print(f"Текущая цена BTC/USDT: {price} USDT")
-    time.sleep(60)  # Обновление каждые 60 секунды
+#while True:
+    #price = get_btc_price()
+    #print(f"Текущая цена BTC/USDT: {price} USDT")
+    #time.sleep(60)  # Обновление каждые 60 секунды
